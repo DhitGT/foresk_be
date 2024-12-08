@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('token');
             $table->string('ip');
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

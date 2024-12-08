@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string(column: 'Kode');
             $table->string('Nama');
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

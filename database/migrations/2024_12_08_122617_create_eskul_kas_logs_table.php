@@ -10,14 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('eskul_report_activities', function (Blueprint $table) {
+        Schema::create('eskul_kas_logs', function (Blueprint $table) {
             $table->id();
-            $table->string("eskul_id");
-            $table->string("picture");
-            $table->text("description");
-            $table->date("date_start");
-            $table->date("date_end");
-            $table->string("absent-code");
+            $table->string('eskul_kas_id');
+            $table->string('eskul_id');
+            $table->string('instansi_id');
+            $table->integer(column: 'amount');
+            $table->string('flag');
+            $table->text('description');
             $table->timestamps();
             $table->timestamp('deleted_at')->nullable();
         });
@@ -28,6 +28,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('eskul_report_activities');
+        Schema::dropIfExists('eskul_kas_logs');
     }
 };

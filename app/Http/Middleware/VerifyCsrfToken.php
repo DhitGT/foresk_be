@@ -15,6 +15,10 @@ class VerifyCsrfToken extends Middleware
         //
         "/api/login",
         "/api/register",
-        "/api/webProfile/store"
+        "/api/webProfile/store",
+        "/api/dashboard/i/getEskulInstansi",
+        "/api/eskul/store",
+        "/api/eskul/trash",
+        "/api/eskul/restore",
     ];
 }

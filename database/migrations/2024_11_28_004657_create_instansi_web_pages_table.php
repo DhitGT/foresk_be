@@ -12,11 +12,12 @@ return new class extends Migration {
     {
         Schema::create('instansi_web_pages', function (Blueprint $table) {
             $table->id();
-            $table->string("description");
+            $table->text("description");
             $table->string("instansi_id");
             $table->string("img_profile");
             $table->string("badge");
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

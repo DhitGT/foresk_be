@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('owner_id');
             $table->integer('total_organization');
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

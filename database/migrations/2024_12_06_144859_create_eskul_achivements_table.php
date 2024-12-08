@@ -15,10 +15,11 @@ return new class extends Migration {
             $table->string("instansi_id");
             $table->string("eskul_id");
             $table->string("name");
-            $table->string("description");
+            $table->text("description");
             $table->string("rank");
             $table->string("year");
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

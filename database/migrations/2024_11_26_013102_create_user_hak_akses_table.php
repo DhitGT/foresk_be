@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string("userId");
             $table->string("hakAksesKode");
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

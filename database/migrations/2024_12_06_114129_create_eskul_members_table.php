@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('eskul_id');
             $table->string('instansi_id');
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

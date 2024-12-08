@@ -14,9 +14,10 @@ class WebProfileController extends Controller
     {
         // Validate incoming request
         $validatedData = $request->validate([
-            'description' => 'required|string|max:255',
+            'description' => 'required|string',
             'img_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Make image optional
 
+            'badge' => 'string',
             'badge.*.name' => 'string|max:50',
             'badge.*.color' => 'string|max:7', // e.g. '#A7F3D0'
         ]);
@@ -60,8 +61,12 @@ class WebProfileController extends Controller
             $webProfile = new instansi_web_page();
             $webProfile->description = $validatedData['description'];
             $webProfile->instansi_id = $instansi->id;
-            $webProfile->img_profile = $imagePath; // Save image path if available
-            $webProfile->badge = json_encode($validatedData['badge']); // Convert badge array to JSON
+            $webProfile->img_profile = $imagePath;
+            if (is_array($validatedData['badge'])) {
+                $webProfile->badge = json_encode($validatedData['badge']);
+            } else {
+                $webProfile->badge = $validatedData['badge'];
+            }
             $webProfile->save();
 
             return response()->json([

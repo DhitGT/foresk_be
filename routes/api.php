@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\dashboard_instansi;
+use App\Http\Controllers\EskulController;
 use App\Http\Controllers\WebProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -15,10 +16,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [dashboard_instansi::class, 'index']);
         Route::get('/getActivityReport', [dashboard_instansi::class, 'getActivityReport']);
         Route::get('/getProfileInfo', [dashboard_instansi::class, 'getProfileInfo']);
+        Route::post('/getEskulInstansi', [dashboard_instansi::class, 'getEskulInstansi']);
     });
     Route::group(['prefix' => '/webProfile'], function () {
 
         Route::post('/store', [WebProfileController::class, 'store']);
+    });
+    Route::group(['prefix' => '/eskul'], function () {
+
+        Route::post('/trash', [EskulController::class, 'trash']);
+        Route::post('/store', [EskulController::class, 'store']);
+        Route::post('/restore', [EskulController::class, 'restore']);
     });
 
     // Protected routes

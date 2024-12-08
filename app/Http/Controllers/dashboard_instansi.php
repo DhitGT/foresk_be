@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EskulMember;
+use App\Models\eskul;
 use App\Models\instansi;
-use App\Models\WebInstansiFollower;
+use App\Models\EskulMember;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use App\Models\WebInstansiFollower;
 use Illuminate\Support\Facades\Auth;
 use App\Models\eskul_report_activity;
 
@@ -22,6 +24,47 @@ class dashboard_instansi extends Controller
         $length = $data->count();
         return response()->json(['data' => $data, 'report_length' => $length]);
     }
+
+    public function getEskulInstansi(Request $request)
+    {
+        $user = Auth::user();
+
+        // Find the instansi for the logged-in user
+        $instansi = Instansi::where('owner_id', $user->id)->first();
+
+        if (!$instansi) {
+            return response()->json(['message' => 'Institution not found'], 404);
+        }
+
+        $nowYear = Carbon::now()->year; // Get the current year
+
+        // Build the eskul query
+        $eskulQuery = Eskul::where('instansi_id', $instansi->id)
+            ->select(
+                'eskuls.*',
+                \DB::raw('(SELECT COUNT(*) FROM eskul_members WHERE eskul_members.eskul_id = eskuls.id) as total_member'),
+                \DB::raw('(SELECT COUNT(*) FROM eskul_achivements acv WHERE acv.eskul_id = eskuls.id) as total_achievement'),
+                \DB::raw("(SELECT COUNT(*) FROM eskul_achivements acv WHERE acv.eskul_id = eskuls.id and acv.year = $nowYear) as total_achievement_year"),
+                \DB::raw('(SELECT about_desc FROM eskul_web_pages WHERE eskul_web_pages.eskul_id = eskuls.id) as about'),
+                \DB::raw('(SELECT COALESCE(total, 0) FROM eskul_kas ekas WHERE ekas.eskul_id = eskuls.id) as total_kas'),
+                \DB::raw('(SELECT name FROM users WHERE users.id = eskuls.leader_id LIMIT 1) as leader_name')
+            );
+
+        // If not fetching trash, exclude soft-deleted records
+        if ($request->isTrash !== true) {
+            $eskulQuery->whereNull('eskuls.deleted_at');
+        } else {
+            $eskulQuery->whereNotNull('eskuls.deleted_at');
+
+        }
+
+        // Fetch the results
+        $eskul = $eskulQuery->get();
+
+        // Return the data
+        return response()->json(['data' => $eskul]);
+    }
+
     public function getProfileInfo(Request $request)
     {
         $user = Auth::user();
