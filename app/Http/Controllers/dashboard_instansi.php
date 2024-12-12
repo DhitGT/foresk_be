@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\eskul;
 use App\Models\instansi;
 use App\Models\EskulMember;
+use App\Models\MasterHakAkses;
+use App\Models\User;
+use App\Models\UserHakAkses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\WebInstansiFollower;
@@ -90,6 +93,52 @@ class dashboard_instansi extends Controller
 
         $length = $data->count();
         return response()->json(['data' => $data, 'isFound' => $length]);
+    }
+    public function getUserInstansi(Request $request)
+    {
+        $user = Auth::user();
+
+        $instansi = instansi::where('owner_id', $user->id)->first();
+
+        $masterHakAkses = MasterHakAkses::all();
+
+        $data = User::select('users.*', 'eskuls.id as eskul_id', 'eskuls.name as eskul_name') // Select all user fields
+            ->join('instansi_users', 'users.id', '=', 'instansi_users.user_id') // Join with pivot table
+            ->leftJoin('eskuls', 'eskuls.leader_id', '=', 'users.id')
+            ->where('instansi_users.instansi_id', '=', $instansi['id']) // Filter by instansi_id
+            ->get();
+
+        $result = [];
+
+        foreach ($data as $user) {
+            $access = [];
+
+            foreach ($masterHakAkses as $hakAkses) {
+                $userHakAkses = UserHakAkses::where('userId', $user->id)
+                    ->where('hakAksesKode', $hakAkses->Kode)
+                    ->first();
+
+                $access[] = [
+                    'kode' => $hakAkses->Kode,
+                    'name' => $hakAkses->Nama,
+                    'value' => $userHakAkses ? true : false
+                ];
+            }
+
+            $result[] = [
+                'id' => $user->id,
+                'profile_image' => $user->profile_image,
+                'role' => $user->role,
+                'email' => $user->email,
+                'name' => $user->name,
+                'eskul_id' => $user->eskul_id,
+                'eskul_name' => $user->eskul_name,
+                'access' => $access
+            ];
+        }
+
+        $length = count($result);
+        return response()->json(['data' => $result, 'isFound' => $length]);
     }
 
 

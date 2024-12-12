@@ -17,19 +17,19 @@ class MasterHakAkses extends Seeder
 
         DB::table('master_hak_akses')->insert([
             [
-                'Kode' => 'ADM',
-                'Nama' => 'Administrator',
+                'Kode' => 'LEADER_HAK_AKSES',
+                'Nama' => 'All Leader Acces',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'Kode' => 'USR',
-                'Nama' => 'User',
+                'Kode' => 'USER_HAK_AKSES',
+                'Nama' => 'All Member Eskul User Acces',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'Kode' => 'GUEST',
+                'Kode' => 'GUEST_HAK_AKSES',
                 'Nama' => 'Guest',
                 'created_at' => now(),
                 'updated_at' => now(),

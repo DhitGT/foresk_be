@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class InstansiUser extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        // 'nama',
+        // 'owner_id',
+        // 'total_organization',
+        'instansi_id',
+        'user_id'
+    ];
 }

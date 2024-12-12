@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\eskul;
 use App\Models\instansi;
+use App\Models\InstansiUser;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -24,6 +27,7 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $request->username,
+            'profile_image' => $request->profile_image,
             'role' => 'manager',
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -40,6 +44,110 @@ class AuthController extends Controller
 
         return response()->json(['token' => $token, 'user' => $user, 'instansi' => $instansi]);
     }
+    public function addUser(Request $request)
+    {
+        $userRequest = Auth::user();
+
+
+        $instansi = Instansi::where('owner_id', $userRequest->id)->first();
+
+        if ($userRequest->role != "manager") {
+            return response()->json(['message' => 'Forbidden', 'status' => 403]);
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('profile_image')) {
+            // Save the file and get the path
+            $imagePath = $request->file('profile_image')->store('profiles', 'public');
+        }
+
+        $request->validate([
+            'username' => 'required|string|max:255',
+            'password' => 'required|string',
+            'profile_image' => 'file|nullable',
+            'email' => 'required|string|email|max:255|unique:users',
+            'leader_eskul_id' => 'required',
+        ]);
+
+        $user = User::create([
+            'name' => $request->username,
+            'profile_image' => $imagePath,
+            'role' => $request->isLeader ? 'Leader' : 'Member',
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        InstansiUser::create([
+            'instansi_id' => $instansi->id,
+            'user_id' => $user->id
+        ]);
+
+        $eskul = eskul::where('id', $request->leader_eskul_id)->first();
+        $eskul->leader_id = $user->id;
+        $eskul->update();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json(['token' => $token, 'data' => $user, 'eskul' => $eskul]);
+    }
+
+    public function editUser(Request $request)
+    {
+        $userRequest = Auth::user();
+
+        // Check if the user has the manager role
+        if ($userRequest->role != "manager") {
+            return response()->json(['message' => 'Forbidden', 'status' => 403]);
+        }
+
+        // Fetch the user to be edited
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found', 'status' => 404]);
+        }
+
+        $instansi = Instansi::where('owner_id', $userRequest->id)->first();
+
+        // Validate request
+        $request->validate([
+            'username' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string',
+            'profile_image' => 'file|nullable',
+            'leader_eskul_id' => 'nullable',
+        ]);
+
+        $imagePath = $user->profile_image; // Keep the current profile image path
+        if ($request->hasFile('profile_image')) {
+            // Save the new file and update the path
+            $imagePath = $request->file('profile_image')->store('profiles', 'public');
+
+            // Optionally, delete the old image if necessary
+            if ($user->profile_image) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+        }
+
+        // Update user details
+        $user->update([
+            'name' => $request->username,
+            'profile_image' => $imagePath,
+            'email' => $request->email,
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
+        ]);
+
+        // Update leader eskul if provided
+        if ($request->leader_eskul_id) {
+            $eskul = eskul::where('id', $request->leader_eskul_id)->first();
+            if ($eskul) {
+                $eskul->leader_id = $user->id;
+                $eskul->update();
+            }
+        }
+
+        return response()->json(['message' => 'User updated successfully', 'data' => $user]);
+    }
+
 
     public function login(Request $request)
     {
@@ -50,7 +158,7 @@ class AuthController extends Controller
         $user = Auth::user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'user' => $user]);
+        return response()->json(['token' => $token, 'data ' => $user]);
     }
     public function nologin()
     {
