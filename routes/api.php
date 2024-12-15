@@ -1,18 +1,34 @@
 <?php
 
-use App\Http\Controllers\dashboard_instansi;
-use App\Http\Controllers\EskulController;
-use App\Http\Controllers\HakAksesController;
-use App\Http\Controllers\WebProfileController;
+use App\Http\Controllers\OrgsWebPageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EskulController;
+use App\Http\Controllers\dashboard_instansi;
+use App\Http\Controllers\HakAksesController;
+use App\Http\Controllers\WebProfileController;
+use App\Http\Controllers\DashboardOrganizationController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/noauth', [AuthController::class, 'nologin'])->name("throwUser");
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::group(['prefix' => '/webprofile'], function () {
+    Route::post('/getProfileInfoWithDomain', [dashboard_instansi::class, 'getProfileInfoWithDomain']);
+    Route::post('/getEskulInstansiPublic', [EskulController::class, 'getEskulInstansiPublic']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
 
+    Route::group(['prefix' => '/dashboard/o'], function () {
+        Route::get('/getProfileInfo', [DashboardOrganizationController::class, 'getProfileInfo']);
+        Route::group(['prefix' => '/webprofile'], function () {
+            Route::post('/storeNavbar', [OrgsWebPageController::class, 'storeNavbarWebpage']);
+            Route::post('/storeJumbotron', [OrgsWebPageController::class, 'storeJumbotronWebpage']);
+            Route::post('/storeAboutUs', [OrgsWebPageController::class, 'storeAboutUsWebpage']);
+        });
+    });
     Route::group(['prefix' => '/dashboard/i'], function () {
         Route::get('/getMasterHakAkses', [HakAksesController::class, 'getMasterHakAkses']);
         Route::post('/updateHakAkses', [HakAksesController::class, 'updateHakAkses']);
@@ -21,8 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [dashboard_instansi::class, 'index']);
         Route::get('/getActivityReport', [dashboard_instansi::class, 'getActivityReport']);
         Route::get('/getProfileInfo', [dashboard_instansi::class, 'getProfileInfo']);
-        Route::post('/getEskulInstansi', [dashboard_instansi::class, 'getEskulInstansi']);
-        Route::get('/getUserInstansi', [dashboard_instansi::class, 'getUserInstansi']);
+
+        Route::post('/getEskulInstansi', [EskulController::class, 'getEskulInstansi']);
+        Route::post('/getUserInstansi', [dashboard_instansi::class, 'getUserInstansi']);
     });
     Route::group(['prefix' => '/webProfile'], function () {
 

@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('user_logins', function (Blueprint $table) {
-            $table->id();
+            $table->uuid("id")->primary();
             $table->string(column: 'userId');
             $table->string('token');
             $table->string('ip');

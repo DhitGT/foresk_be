@@ -17,11 +17,17 @@ class VerifyCsrfToken extends Middleware
         "/api/register",
         "/api/webProfile/store",
         "/api/dashboard/i/getEskulInstansi",
+        "/api/dashboard/i/getUserInstansi",
         "/api/dashboard/i/addUser",
         "/api/dashboard/i/editUser",
         "/api/dashboard/i/updateHakAkses",
+        "/api/dashboard/o/webprofile/storeNavbar",
+        "/api/dashboard/o/webprofile/storeJumbotron",
+        "/api/dashboard/o/webprofile/storeAboutUs",
         "/api/eskul/store",
         "/api/eskul/trash",
         "/api/eskul/restore",
+        "/api/webprofile/getProfileInfoWithDomain",
+        "/api/webprofile/getEskulInstansiPublic",
     ];
 }

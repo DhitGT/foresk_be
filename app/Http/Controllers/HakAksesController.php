@@ -14,7 +14,7 @@ class HakAksesController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role != 'manager') {
+        if ($user->role != 'Manager') {
             return response()->json(['message' => 'no access']);
         }
 

@@ -15,7 +15,8 @@ class WebProfileController extends Controller
         // Validate incoming request
         $validatedData = $request->validate([
             'description' => 'required|string',
-            'img_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Make image optional
+            'custom_domain_name' => 'required|string|unique:instansi_web_pages,custom_domain_name,' . $request->id,
+            'img_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,png|max:6048', // Make image optional
 
             'badge' => 'string',
             'badge.*.name' => 'string|max:50',
@@ -60,6 +61,7 @@ class WebProfileController extends Controller
             // Create a new web profile
             $webProfile = new instansi_web_page();
             $webProfile->description = $validatedData['description'];
+            $webProfile->custom_domain_name = $validatedData['custom_domain_name'];
             $webProfile->instansi_id = $instansi->id;
             $webProfile->img_profile = $imagePath;
             if (is_array($validatedData['badge'])) {

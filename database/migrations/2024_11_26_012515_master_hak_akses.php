@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         //
         Schema::create(table: 'master_hak_akses', callback: function (Blueprint $table): void {
-            $table->id();
+            $table->uuid("id")->primary();
             $table->string(column: 'Kode');
             $table->string('Nama');
             $table->timestamps();

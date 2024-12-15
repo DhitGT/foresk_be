@@ -28,7 +28,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->username,
             'profile_image' => $request->profile_image,
-            'role' => 'manager',
+            'role' => 'Manager',
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
@@ -51,7 +51,7 @@ class AuthController extends Controller
 
         $instansi = Instansi::where('owner_id', $userRequest->id)->first();
 
-        if ($userRequest->role != "manager") {
+        if ($userRequest->role != "Manager") {
             return response()->json(['message' => 'Forbidden', 'status' => 403]);
         }
 
@@ -72,7 +72,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->username,
             'profile_image' => $imagePath,
-            'role' => $request->isLeader ? 'Leader' : 'Member',
+            'role' => $request->leader_eskul_id != 0 ? 'Leader' : 'Member',
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
@@ -82,13 +82,16 @@ class AuthController extends Controller
             'user_id' => $user->id
         ]);
 
-        $eskul = eskul::where('id', $request->leader_eskul_id)->first();
-        $eskul->leader_id = $user->id;
-        $eskul->update();
+        if ($request->leader_eskul_id != 0) {
+            $eskul = eskul::where('id', $request->leader_eskul_id)->first();
+            $eskul->leader_id = $user->id;
+            $eskul->update();
+        }
+
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'data' => $user, 'eskul' => $eskul]);
+        return response()->json(['token' => $token, 'data' => $user]);
     }
 
     public function editUser(Request $request)
@@ -96,7 +99,7 @@ class AuthController extends Controller
         $userRequest = Auth::user();
 
         // Check if the user has the manager role
-        if ($userRequest->role != "manager") {
+        if ($userRequest->role != "Manager") {
             return response()->json(['message' => 'Forbidden', 'status' => 403]);
         }
 
@@ -117,6 +120,24 @@ class AuthController extends Controller
             'leader_eskul_id' => 'nullable',
         ]);
 
+
+
+
+        if ($request->leader_eskul_id == 0) {
+            $eskulEdit = eskul::where('leader_id', $request->id)->first();
+            if ($eskulEdit) {
+                $eskulEdit->leader_id = 0;
+                $eskulEdit->update();
+            }
+        }
+
+        if ($request->leader_eskul_id) {
+            $eskul = eskul::find($request->leader_eskul_id);
+            if ($eskul && ($eskul->leader_id != null && $eskul->leader_id != '0')) {
+                return response()->json(['data' => [], 'message' => 'This Organization Alredy Have Leader', 'status' => 422]);
+            }
+        }
+
         $imagePath = $user->profile_image; // Keep the current profile image path
         if ($request->hasFile('profile_image')) {
             // Save the new file and update the path
@@ -131,13 +152,14 @@ class AuthController extends Controller
         // Update user details
         $user->update([
             'name' => $request->username,
+            'role' => $request->leader_eskul_id != 0 ? 'Leader' : 'Member',
             'profile_image' => $imagePath,
             'email' => $request->email,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
         ]);
 
         // Update leader eskul if provided
-        if ($request->leader_eskul_id) {
+        if ($request->leader_eskul_id && ($request->leader_eskul_id != 0 || $request->leader_eskul_id != null)) {
             $eskul = eskul::where('id', $request->leader_eskul_id)->first();
             if ($eskul) {
                 $eskul->leader_id = $user->id;
@@ -158,7 +180,7 @@ class AuthController extends Controller
         $user = Auth::user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'data ' => $user]);
+        return response()->json(['token' => $token, 'data' => $user]);
     }
     public function nologin()
     {

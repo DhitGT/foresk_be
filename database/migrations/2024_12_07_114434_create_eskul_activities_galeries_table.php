@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('eskul_activities_galeries', function (Blueprint $table) {
-            $table->id();
+            $table->uuid("id")->primary();
             $table->string('eskul_activities_id');
             $table->string('image');
             $table->timestamps();

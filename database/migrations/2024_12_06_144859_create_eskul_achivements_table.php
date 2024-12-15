@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('eskul_achivements', function (Blueprint $table) {
-            $table->id();
+            $table->uuid("id")->primary();
             $table->string("instansi_id");
             $table->string("eskul_id");
             $table->string("name");

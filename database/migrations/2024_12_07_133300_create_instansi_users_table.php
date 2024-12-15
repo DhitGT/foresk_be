@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('instansi_users', function (Blueprint $table) {
-            $table->id();
+            $table->uuid("id")->primary();
             $table->string('instansi_id');
             $table->string('user_id');
             $table->timestamps();

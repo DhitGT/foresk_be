@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create(table: 'managers', callback: function (Blueprint $table): void {
-            $table->id();
+            $table->uuid("id")->primary();
             $table->string('nama_lembaga');
             $table->string('owner_id');
 
