@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\eskul;
-use App\Models\eskul_web_page;
+use App\Models\eskul_web_page_galery;
+use web;
 use Auth;
+use App\Models\eskul;
 use Illuminate\Http\Request;
+use App\Models\eskul_web_page;
+use App\Models\eskul_activities;
+use App\Models\eskul_activities_galery;
 use Illuminate\Support\Facades\Storage;
 
 class OrgsWebPageController extends Controller
@@ -55,7 +59,6 @@ class OrgsWebPageController extends Controller
             'message' => 'success!',
             'data' => [
                 'navbar_title' => $eskulwp->navbar_title,
-                'logoUpload' => $path,
                 'logo' => $eskul->logo ? asset('storage/' . $eskul->logo) : null,
             ],
         ]);
@@ -145,6 +148,238 @@ class OrgsWebPageController extends Controller
         return response()->json([
             'message' => 'success!',
             'data' => [],
+        ]);
+    }
+    public function storeActivitiesDesc(Request $request)
+    {
+        // Validate the input
+        $request->validate([
+            'eskul_id' => 'required|exists:eskuls,id',
+            'description' => 'required|string|max:5000',
+        ]);
+
+        try {
+            // Find the Eskul and its Web Page
+            $eskul = eskul::findOrFail($request->eskul_id);
+            $ewp = eskul_web_page::where('eskul_id', $eskul->id)->first();
+
+            // If the Eskul Web Page does not exist, return an error
+            if (!$ewp) {
+                return response()->json(['message' => 'Eskul Web Page not found.']);
+            }
+
+            // Update the description
+            $ewp->activities_desc = $request->description;
+            $ewp->save();
+
+            // Return a success response with the updated data
+            return response()->json([
+                'message' => 'Activities description updated successfully!',
+                'data' => $ewp,
+            ]);
+
+        } catch (\Exception $e) {
+            // Handle unexpected errors
+            return response()->json([
+                'message' => 'An error occurred while updating the description.',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function storeActivitiesEskulItem(Request $request)
+    {
+        $user = Auth::user();
+        // Retrieve the Eskul
+        $eskul = eskul::where('leader_id', $user->id)->first();
+        if (!$eskul) {
+            return response()->json(['message' => 'Eskul not found.'], 404);
+        }
+
+        // Check if the request is for editing
+        if ($request->is_edit == 'true') {
+            // Retrieve the existing activity
+            $eskulactv = eskul_activities::where('id', $request->activity_id)->first();
+            if (!$eskulactv) {
+                return response()->json(['message' => 'Activity not found.'], 404);
+            }
+
+            // Update fields
+            if ($request->hasFile('cover_image')) {
+                // Delete old cover image if it exists
+                if ($eskulactv->cover_image && \Storage::disk('public')->exists($eskulactv->cover_image)) {
+                    \Storage::disk('public')->delete($eskulactv->cover_image);
+                }
+
+                // Store the new cover image
+                $file = $request->file('cover_image');
+                $filePathCover = $file->store('cover_image', 'public');
+                $eskulactv->cover_image = $filePathCover;
+            }
+
+            $eskulactv->update([
+                'gen' => $request->gen,
+                'date' => $request->date,
+                'location' => $request->location,
+                'title' => $request->title,
+                'description' => $request->description,
+            ]);
+
+            // Handle gallery updates
+            if ($request->gallery) {
+                // Delete only images specified in the request
+                if ($request->has('deletedImages')) {
+                    foreach ($request->deletedImages as $deletedImage) {
+                        $galleryItem = eskul_activities_galery::where('eskul_activities_id', $eskulactv->id)
+                            ->where('id', $deletedImage)
+                            ->first();
+
+                        if ($galleryItem && \Storage::disk('public')->exists($galleryItem->image)) {
+                            \Storage::disk('public')->delete($galleryItem->image);
+                            $galleryItem->delete();
+                        }
+                    }
+                }
+
+                // Add new gallery images
+                if ($request->has('gallery')) {
+                    foreach ($request->gallery as $item) {
+                        if (isset($item['imageUpload'])) {
+                            $filePath = $item['imageUpload']->store('gallery', 'public');
+                            eskul_activities_galery::create([
+                                'eskul_activities_id' => $eskulactv->id,
+                                'image' => $filePath,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            return response()->json(['message' => 'Activity updated successfully!']);
+        }
+
+        // If not edit, create a new activity
+        $file = $request->file('cover_image');
+        $filePathCover = $file->store('cover_image', 'public');
+        $eskulactv = eskul_activities::create([
+            'instansi_id' => $eskul?->instansi_id,
+            'eskul_id' => $eskul?->id,
+            'cover_image' => $filePathCover,
+            'gen' => $request->gen,
+            'date' => $request->date,
+            'location' => $request->location,
+            'title' => $request->title,
+            'description' => $request->description,
+        ]);
+
+        foreach ($request->gallery as $item) {
+            if (isset($item['imageUpload'])) {
+                $filePath = $item['imageUpload']->store('gallery', 'public');
+                eskul_activities_galery::create([
+                    'eskul_activities_id' => $eskulactv->id,
+                    'image' => $filePath,
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Activity created successfully!']);
+    }
+
+
+    public function storeGallery(Request $request)
+    {
+        $user = Auth::user();
+
+        $eskul = eskul::where('leader_id', $user->id)->first();
+        if (!$eskul) {
+            return response()->json(['message' => 'Eskul not found.'], 404);
+        }
+
+        $ewp = eskul_web_page::where('eskul_id', $request->eskul_id)->first();
+
+
+        // Delete only images specified in the request
+        if ($request->has('deletedImages')) {
+            foreach ($request->deletedImages as $deletedImage) {
+                $galleryItem = eskul_web_page_galery::where('eskul_web_page_id', $ewp->id)
+                    ->where('id', $deletedImage)
+                    ->first();
+
+                if ($galleryItem && \Storage::disk('public')->exists($galleryItem->image)) {
+                    \Storage::disk('public')->delete($galleryItem->image);
+                    $galleryItem->delete();
+                }
+            }
+        }
+
+        // Add new gallery images
+        if ($request->has('gallery')) {
+            foreach ($request->gallery as $item) {
+                if (isset($item['imageUpload'])) {
+                    $filePath = $item['imageUpload']->store('gallery', 'public');
+                    eskul_web_page_galery::create([
+                        'eskul_id' => $request->eskul_id,
+                        'eskul_web_page_id' => $ewp->id,
+                        'image' => $filePath,
+                    ]);
+                }
+            }
+        }
+
+
+        return response()->json([
+            'message' => 'success!',
+            'data' => [],
+        ]);
+    }
+    public function getEskulWebPage(Request $request)
+    {
+        $eskulWp = eskul::where('id', $request->eskul_id)
+            ->with([
+                'webPages' => function ($query) {
+                    $query->select('*')->with([
+                        'webPageGalery' => function ($query) {
+                            $query->select('*');
+                        },
+                        'webPageActivities' => function ($query) {
+                            $query->select('*')->with([
+                                'webPageActivitiesGalery' => function ($query) {
+                                    $query->select('*');
+                                }
+                            ]);
+                        },
+                    ]); // Fetch all fields from eskul_achievements
+                },
+            ])->first();
+        return response()->json([
+            'message' => 'success!',
+            'data' => $eskulWp,
+        ]);
+    }
+    public function getEskulWebPageUrl(Request $request)
+    {
+        $ewp = eskul_web_page::where("custom_domain_name", $request->cdn)->first();
+
+        $eskulWp = eskul::where('id', $ewp->eskul_id)
+            ->with([
+                'webPages' => function ($query) {
+                    $query->select('*')->with([
+                        'webPageGalery' => function ($query) {
+                            $query->select('*');
+                        },
+                        'webPageActivities' => function ($query) {
+                            $query->select('*')->with([
+                                'webPageActivitiesGalery' => function ($query) {
+                                    $query->select('*');
+                                }
+                            ]);
+                        },
+                    ]); // Fetch all fields from eskul_achievements
+                },
+            ])->withCount('eskulMembers')->first();
+        return response()->json([
+            'message' => 'success!',
+            'data' => $eskulWp,
         ]);
     }
 }

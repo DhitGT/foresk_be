@@ -35,6 +35,10 @@ class EskulMember extends Model
     protected $table = "eskul_members";
 
     protected $fillable = [
-
+        'name',
+        'id',
+        'gen',
+        'eskul_id',
+        'instansi_id',
     ];
 }

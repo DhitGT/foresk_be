@@ -32,6 +32,13 @@ class eskul_activities_galery extends Model
         });
     }
 
+    protected $fillable = [
+        'eskul_activities_id',
+        'image',
+    ];
+
+
+
 
 
 }

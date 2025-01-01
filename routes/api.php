@@ -19,14 +19,24 @@ Route::group(['prefix' => '/webprofile'], function () {
     Route::post('/getEskulInstansiPublic', [EskulController::class, 'getEskulInstansiPublic']);
 });
 
+Route::post('/getEskulWebPageUrl', [OrgsWebPageController::class, 'getEskulWebPageUrl']);
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::group(['prefix' => '/dashboard/o'], function () {
         Route::get('/getProfileInfo', [DashboardOrganizationController::class, 'getProfileInfo']);
+        Route::get('/getEskulMembers', [DashboardOrganizationController::class, 'getEskulMembers']);
+        Route::post('/storeEskulMember', [DashboardOrganizationController::class, 'storeEskulMember']);
+
+
+
         Route::group(['prefix' => '/webprofile'], function () {
             Route::post('/storeNavbar', [OrgsWebPageController::class, 'storeNavbarWebpage']);
             Route::post('/storeJumbotron', [OrgsWebPageController::class, 'storeJumbotronWebpage']);
             Route::post('/storeAboutUs', [OrgsWebPageController::class, 'storeAboutUsWebpage']);
+            Route::post('/getEskulWebPage', [OrgsWebPageController::class, 'getEskulWebPage']);
+            Route::post('/storeActivitiesEskulItem', [OrgsWebPageController::class, 'storeActivitiesEskulItem']);
+            Route::post('/storeActivitiesDesc', [OrgsWebPageController::class, 'storeActivitiesDesc']);
+            Route::post('/storeGallery', [OrgsWebPageController::class, 'storeGallery']);
         });
     });
     Route::group(['prefix' => '/dashboard/i'], function () {

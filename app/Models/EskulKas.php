@@ -35,5 +35,6 @@ class EskulKas extends Model
     protected $fillable = [
         'instansi_id',
         'eskul_id',
+        'total',
     ];
 }

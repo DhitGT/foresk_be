@@ -70,4 +70,10 @@ class eskul extends Model
         return $this->hasOne(EskulKas::class, 'eskul_id', 'id');
     }
 
+    public function eskulMembers()
+    {
+        return $this->hasMany(EskulMember::class, 'eskul_id');
+    }
+
+
 }

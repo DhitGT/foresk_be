@@ -16,6 +16,15 @@ use App\Models\eskul_report_activity;
 
 class dashboard_instansi extends Controller
 {
+    private function checkAccess()
+    {
+        $user = Auth::user();
+        $userDb = User::findOrFail($user->id);
+        if ($userDb->role != "Manager") {
+            return response()->json(['message' => 'forbidden'], 403);
+
+        }
+    }
     //
     public function index(Request $request)
     {
@@ -23,16 +32,22 @@ class dashboard_instansi extends Controller
     }
     public function getActivityReport(Request $request)
     {
+        $user = Auth::user();
+
         $data = eskul_report_activity::get();
         $length = $data->count();
+        $this->checkAccess();
         return response()->json(['data' => $data, 'report_length' => $length]);
     }
+
+
 
 
 
     public function getProfileInfo(Request $request)
     {
         $user = Auth::user();
+        $this->checkAccess();
 
 
         $data = Instansi::where('instansis.owner_id', $user->id)
@@ -60,6 +75,7 @@ class dashboard_instansi extends Controller
     {
 
         $user = Auth::user();
+        // $this->checkAccess();
 
         $data = Instansi::join('instansi_web_pages', 'instansi_web_pages.instansi_id', '=', 'instansis.id') // Join instansi_web_pages with instansis
             ->leftJoin('users', 'users.id', '=', 'instansis.owner_id') // Join the users table
@@ -93,6 +109,7 @@ class dashboard_instansi extends Controller
     public function getUserInstansi(Request $request)
     {
         $user = Auth::user();
+        $this->checkAccess();
 
         $instansi = instansi::where('owner_id', $user->id)->first();
 

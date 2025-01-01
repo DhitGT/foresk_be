@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->uuid("id")->primary();
             $table->string('instansi_id');
             $table->string('eskul_id');
-            $table->integer('total');
+            $table->integer('total')->default(0);
             $table->timestamps();
             $table->timestamp('deleted_at')->nullable();
         });

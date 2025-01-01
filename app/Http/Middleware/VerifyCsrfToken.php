@@ -14,6 +14,7 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         //
         "/api/login",
+        "/api/logout",
         "/api/register",
         "/api/webProfile/store",
         "/api/dashboard/i/getEskulInstansi",
@@ -21,9 +22,15 @@ class VerifyCsrfToken extends Middleware
         "/api/dashboard/i/addUser",
         "/api/dashboard/i/editUser",
         "/api/dashboard/i/updateHakAkses",
+        "/api/dashboard/o/storeEskulMember",
         "/api/dashboard/o/webprofile/storeNavbar",
+        "/api/dashboard/o/webprofile/storeGallery",
         "/api/dashboard/o/webprofile/storeJumbotron",
         "/api/dashboard/o/webprofile/storeAboutUs",
+        "/api/dashboard/o/webprofile/getEskulWebPage",
+        "/api/getEskulWebPageUrl",
+        "/api/dashboard/o/webprofile/storeActivitiesEskulItem",
+        "/api/dashboard/o/webprofile/storeActivitiesDesc",
         "/api/eskul/store",
         "/api/eskul/trash",
         "/api/eskul/restore",

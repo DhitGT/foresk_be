@@ -31,4 +31,19 @@ class eskul_activities extends Model
             $model->id = (string) Str::uuid();
         });
     }
+
+    protected $fillable = [
+        'instansi_id',
+        'eskul_id',
+        'cover_image',
+        'gen',
+        'date',
+        'location',
+        'title',
+        'description',
+    ];
+    public function webPageActivitiesGalery()
+    {
+        return $this->hasMany(eskul_activities_galery::class, 'eskul_activities_id', 'id');
+    }
 }

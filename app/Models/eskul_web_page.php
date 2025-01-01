@@ -36,4 +36,13 @@ class eskul_web_page extends Model
         'instansi_id',
         'eskul_id',
     ];
+
+    public function webPageGalery()
+    {
+        return $this->hasMany(eskul_web_page_galery::class, 'eskul_id', 'eskul_id');
+    }
+    public function webPageActivities()
+    {
+        return $this->hasMany(eskul_activities::class, 'eskul_id', 'eskul_id');
+    }
 }

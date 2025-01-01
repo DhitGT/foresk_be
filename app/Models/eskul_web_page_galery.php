@@ -23,6 +23,13 @@ class eskul_web_page_galery extends Model
      * @var string
      */
     protected $keyType = 'string';
+
+    protected $fillable = [
+        'eskul_id',
+        'eskul_web_page_id',
+        'eskul_activities_id',
+        'image',
+    ];
     protected static function boot()
     {
         parent::boot();
