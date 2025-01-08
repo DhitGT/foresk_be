@@ -13,11 +13,13 @@ return new class extends Migration {
         Schema::create('eskul_report_activities', function (Blueprint $table) {
             $table->uuid("id")->primary();
             $table->string("eskul_id");
+            $table->string("title");
+            $table->string("location");
             $table->string("picture");
             $table->text("description");
             $table->date("date_start");
             $table->date("date_end");
-            $table->string("absent-code");
+            $table->string("absent_code");
             $table->timestamps();
             $table->timestamp('deleted_at')->nullable();
         });

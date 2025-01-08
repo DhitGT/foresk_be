@@ -10,13 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('instansis', function (Blueprint $table) {
+        Schema::create('master_eskul_absensis', function (Blueprint $table) {
             $table->uuid("id")->primary();
-            $table->string('nama')->nullable();
-            $table->string('owner_id');
-            $table->integer('total_organization');
+            $table->string('eskul_id');
+            $table->string('eskul_report_activity_id');
+            $table->string('absent_code');
             $table->timestamps();
-            $table->timestamp('deleted_at')->nullable();
         });
     }
 
@@ -25,6 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('instansis');
+        Schema::dropIfExists('master_eskul_absensis');
     }
 };

@@ -12,16 +12,28 @@ class WebProfileController extends Controller
 {
     public function store(Request $request)
     {
+        // $user = Auth::user();
+        // $instansi = Instansi::where('leader_id', $user->id)->first();
         // Validate incoming request
         $validatedData = $request->validate([
+            'name' => 'required|string',
             'description' => 'required|string',
-            'custom_domain_name' => 'required|string|unique:instansi_web_pages,custom_domain_name,' . $request->id,
+            'custom_domain_name' => 'required|string|',
             'img_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,png|max:6048', // Make image optional
 
             'badge' => 'string',
             'badge.*.name' => 'string|max:50',
             'badge.*.color' => 'string|max:7', // e.g. '#A7F3D0'
         ]);
+
+        $checkCdn = instansi_web_page::where('custom_domain_name', $request->custom_domain_name)->count();
+
+        if ($checkCdn != 0) {
+            return response()->json([
+                'message' => 'Domain Name Alredy Exist',
+                'data' => [],
+            ], );
+        }
 
         // Handle file upload if present
         $imagePath = null;
@@ -41,9 +53,17 @@ class WebProfileController extends Controller
 
         if ($webProfile) {
             // Update the existing web profile
+
+            if ($validatedData['name']) {
+                $instansi->nama = $validatedData['name'];
+                $instansi->update();
+            }
+
+
             $webProfile->description = $validatedData['description'];
+            $webProfile->custom_domain_name = $validatedData['custom_domain_name'];
             if ($imagePath) {
-                $webProfile->img_profile = $imagePath; // Update the image if new one is uploaded
+                $webProfile->img_profile = $imagePath;
             }
 
             if ($request['badge']) {
@@ -59,6 +79,10 @@ class WebProfileController extends Controller
             ], 200);
         } else {
             // Create a new web profile
+
+            $instansi->nama = $validatedData['name'];
+            $instansi->update();
+
             $webProfile = new instansi_web_page();
             $webProfile->description = $validatedData['description'];
             $webProfile->custom_domain_name = $validatedData['custom_domain_name'];

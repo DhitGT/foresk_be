@@ -50,6 +50,7 @@ class dashboard_instansi extends Controller
         $this->checkAccess();
 
 
+
         $data = Instansi::where('instansis.owner_id', $user->id)
             ->leftJoin('instansi_web_pages', 'instansi_web_pages.instansi_id', '=', 'instansis.id')
             ->leftJoin('users', 'users.id', '=', 'instansis.owner_id')
@@ -67,6 +68,10 @@ class dashboard_instansi extends Controller
                 \DB::raw('(SELECT COUNT(*) FROM eskul_achivements WHERE eskul_achivements.instansi_id = instansis.id) as total_achivement')
             )
             ->first();
+
+        if (!$data) {
+            return response()->json(['data' => [], 'isFound' => 0]);
+        }
 
         $length = $data->count();
         return response()->json(['data' => $data, 'isFound' => $length]);

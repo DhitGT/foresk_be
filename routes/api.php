@@ -1,18 +1,28 @@
 <?php
 
-use App\Http\Controllers\OrgsWebPageController;
+use App\Http\Controllers\EskulAbsentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EskulController;
 use App\Http\Controllers\dashboard_instansi;
 use App\Http\Controllers\HakAksesController;
 use App\Http\Controllers\WebProfileController;
+use App\Http\Controllers\OrgsWebPageController;
+use App\Http\Controllers\EskulReportActivityController;
 use App\Http\Controllers\DashboardOrganizationController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/noauth', [AuthController::class, 'nologin'])->name("throwUser");
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::post('/auth/googleSignIn', [AuthController::class, 'googleSignIn']);
+
+Route::group(['prefix' => '/apps'], function () {
+    Route::get('/getAppStats', [AppsController::class, 'GetAppsStats']);
+});
+
 
 Route::group(['prefix' => '/webprofile'], function () {
     Route::post('/getProfileInfoWithDomain', [dashboard_instansi::class, 'getProfileInfoWithDomain']);
@@ -21,13 +31,19 @@ Route::group(['prefix' => '/webprofile'], function () {
 
 Route::post('/getEskulWebPageUrl', [OrgsWebPageController::class, 'getEskulWebPageUrl']);
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/absent/getUserByName', [EskulAbsentController::class, 'getUserByName']);
+    Route::post('/absent/storeAbsen', [EskulAbsentController::class, 'storeAbsen']);
+    Route::get('/absent/getEskulAbsent', [EskulAbsentController::class, 'GetEskulAbsen']);
+    Route::post('/absent/getEskulAbsenByCode', [EskulAbsentController::class, 'GetEskulAbsenByCode']);
+    Route::post('/absent/editAbsen', [EskulAbsentController::class, 'editAbsen']);
+    Route::post('/absent/deleteAbsen', [EskulAbsentController::class, 'deleteAbsen']);
 
     Route::group(['prefix' => '/dashboard/o'], function () {
         Route::get('/getProfileInfo', [DashboardOrganizationController::class, 'getProfileInfo']);
         Route::get('/getEskulMembers', [DashboardOrganizationController::class, 'getEskulMembers']);
         Route::post('/storeEskulMember', [DashboardOrganizationController::class, 'storeEskulMember']);
 
-
+        Route::apiResource('eskul-report-activities', EskulReportActivityController::class);
 
         Route::group(['prefix' => '/webprofile'], function () {
             Route::post('/storeNavbar', [OrgsWebPageController::class, 'storeNavbarWebpage']);

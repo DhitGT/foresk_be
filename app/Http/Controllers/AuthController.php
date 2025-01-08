@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Google\Client;
+use Google_Client;
 use App\Models\User;
 use App\Models\eskul;
-use App\Models\instansi;
-use App\Models\InstansiUser;
 
+use App\Models\instansi;
+use Illuminate\Support\Str;
+use App\Models\InstansiUser;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +18,111 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
+    public function googleSignIn(Request $request)
+    {
+        $client = new Google_Client(['client_id' => env('GOOGLE_CLIENT_ID')]); // Your Google Client ID
+        $idToken = $request->input('credential');
+
+        try {
+            // Verify the token
+            $payload = $client->verifyIdToken($idToken);
+
+            if ($payload) {
+                // Extract user information
+                $googleId = $payload['sub']; // Google user ID
+                $email = $payload['email'];
+                $name = $payload['name'];
+                $profileImage = $payload['picture'] ?? null;
+
+                // Check if the user already exists
+                $user = User::where('google_id', $googleId)->orWhere('email', $email)->first();
+
+                $imagePath = null;
+                if ($profileImage) {
+                    // Fetch and save the image locally
+                    $imageContents = file_get_contents($profileImage);
+                    $imageName = uniqid() . '.jpg'; // Generate a unique file name
+                    $imagePath = 'profiles/' . $imageName; // Path inside the storage folder
+                    Storage::disk('public')->put($imagePath, $imageContents);
+                }
+
+                if (!$user) {
+                    // Create a new user following the same pattern as the register function
+                    $user = User::create([
+                        'name' => $name,
+                        'profile_image' => $imagePath,
+                        'role' => 'Manager', // Default role, customize as needed
+                        'email' => $email,
+                        'google_id' => $googleId,
+                        'password' => Hash::make(Str::random(12)), // Random password for security
+                    ]);
+
+                    // Create the associated instansi
+                    $instansi = Instansi::create([
+                        'nama' => null, // Example naming convention
+                        'description' => 'Created via Google Sign-In',
+                        'owner_id' => $user->id,
+                        'total_organization' => 0,
+                    ]);
+                } else {
+                    $instansi = Instansi::where('owner_id', $user->id)->first();
+                }
+
+                // Generate a token for the user
+                $token = $user->createToken('auth_token')->plainTextToken;
+
+                return response()->json([
+                    'message' => 'Successfully authenticated',
+                    'token' => $token,
+                    'user' => $user,
+                    'instansi' => $instansi,
+                ]);
+            } else {
+                return response()->json(['error' => 'Invalid token'], 401);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Token verification failed', 'details' => $e->getMessage()], 500);
+        }
+    }
+    public function handleGoogleCallback(Request $request)
+    {
+        $googleClient = new Google_Client();
+        $googleClient->setClientId(config('google.client_id'));
+        $googleClient->setClientSecret(config('google.client_secret'));
+        $googleClient->setRedirectUri(config('google.redirect_uri'));
+
+        // Get the token sent from the frontend
+        $idToken = $request->input('id_token');
+
+        try {
+            // Verify the Google ID token
+            $payload = $googleClient->verifyIdToken($idToken);
+
+            if ($payload) {
+                // Check if the user already exists in the database
+                $user = User::where('google_id', $payload['sub'])->first();
+
+                // If user doesn't exist, create a new one
+                if (!$user) {
+                    $user = User::create([
+                        'name' => $payload['name'],
+                        'email' => $payload['email'],
+                        'google_id' => $payload['sub'],
+                    ]);
+                }
+
+                // Log the user in
+                Auth::login($user);
+
+                // Optionally, return a response with user data
+                return response()->json(['message' => 'Login successful', 'user' => $user]);
+            } else {
+                return response()->json(['message' => 'Invalid token'], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Token verification failed', 'error' => $e->getMessage()], 400);
+        }
+    }
     //
     public function register(Request $request)
     {

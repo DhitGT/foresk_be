@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class eskul_report_activity extends Model
+class EskulAbsensi extends Model
 {
     use HasFactory;
 
@@ -27,20 +27,21 @@ class eskul_report_activity extends Model
     {
         parent::boot();
 
-        // static::creating(function ($model) {
-        //     $model->id = (string) Str::uuid();
-        // });
+        static::creating(function ($model) {
+            $model->id = (string) Str::uuid();
+        });
     }
 
     protected $fillable = [
-        'id',
-        'eskul_id',
-        'picture',
-        'description',
-        'date_start',
-        'date_end',
+        'member_id',
         'absent_code',
-        'title',
-        'location',
+        'eskul_id',
+        'keterangan',
+        'date',
     ];
+
+    public function member()
+    {
+        return $this->hasOne(EskulMember::class, 'id', 'member_id');
+    }
 }
