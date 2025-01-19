@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\eskul;
+use App\Models\eskul_web_page;
 use App\Models\EskulAbsensi;
 use App\Models\EskulMember;
 use Date;
@@ -14,34 +15,50 @@ class EskulAbsentController extends Controller
 {
     //
 
-
-
     public function GetEskulAbsen(Request $request)
     {
-        $user = Auth::user();
-        $eskul = eskul::where('leader_id', $user->id)->first();
+        try {
+            $data = MasterEskulAbsensi::query(); // Initialize query for MasterEskulAbsensi
 
-        $data = MasterEskulAbsensi::where('eskul_id', $eskul->id)
+            if ($request->eskul_cdn) {
+                // Find the eskul_web_page record
+                $ewp = eskul_web_page::where('custom_domain_name', $request->eskul_cdn)->first();
 
-            ->select(
-                '*'
-            )
-            ->with([
+                // Check if the record exists and apply filter
+                if ($ewp) {
+                    $data->where('eskul_id', $ewp->eskul_id);
+                } else {
+                    return response()->json(['data' => null, 'isFound' => 0]); // Return not found response
+                }
+            } else {
+                $user = Auth::user();
+                $eskul = eskul::where('leader_id', $user->id)->first();
+
+                if ($eskul) {
+                    $data->where('eskul_id', $eskul->id);
+                } else {
+                    return response()->json(['data' => null, 'isFound' => 0]); // Return not found response
+                }
+            }
+
+            // Fetch the data with relationships
+            $result = $data->with([
                 'eskulReportActivity' => function ($query) {
-                    $query->select('*'); // Fetch all fields from eskul_achievements
+                    $query->select('*'); // Fetch all fields
                 },
                 'eskul' => function ($query) {
-                    $query->select('*'); // Fetch all fields from eskul_kas
+                    $query->select('*'); // Fetch all fields
                 },
+            ])->get();
 
-            ])
-            ->get();
+            $length = $result->count();
 
-
-
-        $length = $data->count();
-        return response()->json(['data' => $data, 'isFound' => $length]);
+            return response()->json(['data' => $result, 'isFound' => $length]); // Return the result
+        } catch (\Throwable $th) {
+            return response()->json(['error' => $th->getMessage()], 500); // Return the error message with a 500 status code
+        }
     }
+
     public function GetEskulAbsenByCode(Request $request)
     {
         $data = MasterEskulAbsensi::where('absent_code', $request->absent_code)

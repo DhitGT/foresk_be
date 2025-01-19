@@ -32,6 +32,7 @@ class eskul_report_activity extends Model
         // });
     }
 
+
     protected $fillable = [
         'id',
         'eskul_id',
@@ -41,6 +42,12 @@ class eskul_report_activity extends Model
         'date_end',
         'absent_code',
         'title',
+        'instansi_id',
         'location',
     ];
+    public function eskul()
+    {
+        return $this->hasOne(eskul::class, 'id', 'eskul_id');
+    }
+
 }

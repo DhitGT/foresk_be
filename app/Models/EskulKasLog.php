@@ -23,6 +23,15 @@ class EskulKasLog extends Model
      * @var string
      */
     protected $keyType = 'string';
+    protected $fillable = [
+        'eskul_id',
+        'eskul_kas_id',
+        'instansi_id',
+        'amount',
+        'flag',
+        'description'
+    ];
+
     protected static function boot()
     {
         parent::boot();

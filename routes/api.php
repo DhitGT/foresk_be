@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EskulAbsentController;
+use App\Http\Controllers\KasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AuthController;
@@ -31,12 +32,19 @@ Route::group(['prefix' => '/webprofile'], function () {
 
 Route::post('/getEskulWebPageUrl', [OrgsWebPageController::class, 'getEskulWebPageUrl']);
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/absent/getUserByName', [EskulAbsentController::class, 'getUserByName']);
-    Route::post('/absent/storeAbsen', [EskulAbsentController::class, 'storeAbsen']);
-    Route::get('/absent/getEskulAbsent', [EskulAbsentController::class, 'GetEskulAbsen']);
-    Route::post('/absent/getEskulAbsenByCode', [EskulAbsentController::class, 'GetEskulAbsenByCode']);
-    Route::post('/absent/editAbsen', [EskulAbsentController::class, 'editAbsen']);
-    Route::post('/absent/deleteAbsen', [EskulAbsentController::class, 'deleteAbsen']);
+    Route::group(['prefix' => '/kas'], function () {
+        Route::post('/getEskulKas', [KasController::class, 'getEskulKas']);
+        Route::post('/storeKas', [KasController::class, 'storeKas']);
+    });
+
+    Route::group(['prefix' => '/absent'], function () {
+        Route::post('/getUserByName', [EskulAbsentController::class, 'getUserByName']);
+        Route::post('/storeAbsen', [EskulAbsentController::class, 'storeAbsen']);
+        Route::post('/getEskulAbsent', [EskulAbsentController::class, 'GetEskulAbsen']);
+        Route::post('/getEskulAbsenByCode', [EskulAbsentController::class, 'GetEskulAbsenByCode']);
+        Route::post('/editAbsen', [EskulAbsentController::class, 'editAbsen']);
+        Route::post('/deleteAbsen', [EskulAbsentController::class, 'deleteAbsen']);
+    });
 
     Route::group(['prefix' => '/dashboard/o'], function () {
         Route::get('/getProfileInfo', [DashboardOrganizationController::class, 'getProfileInfo']);
@@ -63,7 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [dashboard_instansi::class, 'index']);
         Route::get('/getActivityReport', [dashboard_instansi::class, 'getActivityReport']);
         Route::get('/getProfileInfo', [dashboard_instansi::class, 'getProfileInfo']);
-
+        Route::post('/getEskulActivityReport', [EskulReportActivityController::class, 'getEskulActivityReport']);
         Route::post('/getEskulInstansi', [EskulController::class, 'getEskulInstansi']);
         Route::post('/getUserInstansi', [dashboard_instansi::class, 'getUserInstansi']);
     });

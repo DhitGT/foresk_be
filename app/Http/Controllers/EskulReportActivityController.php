@@ -13,6 +13,34 @@ use Illuminate\Support\Facades\Storage;
 
 class EskulReportActivityController extends Controller
 {
+    public function getEskulActivityReport(Request $request)
+    {
+        $query = eskul_report_activity::query();
+
+        $user = Auth::user();
+        $eskul = eskul::where('id', $request->eskul_id)->first();
+
+
+        // Apply filters
+        if ($request->has('start_date')) {
+            $query->where('date_start', '>=', $request->input('start_date'));
+        }
+
+        if ($request->has('end_date')) {
+            $query->where('date_end', '<=', $request->input('end_date'));
+        }
+
+        $activities = $query->where('instansi_id', $request->instansi_id)->with([
+            'eskul' => function ($query) {
+                $query->select('*')->with([
+                    'webPages' => function ($query) {
+                        $query->select("*");
+                }]); // Fetch all fields from eskul_achievements
+            }
+        ])->get();
+
+        return response()->json($activities);
+    }
     public function index(Request $request)
     {
         $query = eskul_report_activity::query();
