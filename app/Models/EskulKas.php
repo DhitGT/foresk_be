@@ -37,4 +37,10 @@ class EskulKas extends Model
         'eskul_id',
         'total',
     ];
+
+    public function eskul()
+    {
+        return $this->hasOne(eskul::class, 'id', 'eskul_id');
+    }
+
 }

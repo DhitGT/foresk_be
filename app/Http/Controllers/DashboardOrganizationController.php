@@ -16,9 +16,9 @@ class DashboardOrganizationController extends Controller
         $userDb = User::findOrFail($user->id);
         if ($userDb->role != "Leader") {
             return response()->json(['message' => 'forbidden'], 403);
-
         }
     }
+
     public function getEskulMembers(Request $request)
     {
         $user = Auth::user();
@@ -26,12 +26,11 @@ class DashboardOrganizationController extends Controller
 
         $eskulData = eskul::where('leader_id', $user->id)->first();
 
-        // Paginate the members, with a default of 10 items per page
         $eskulMemberData = EskulMember::where('eskul_id', $eskulData->id)
-            ->paginate($request->get('per_page', 5)); // You can specify a different number of items per page using the `per_page` parameter
+            ->paginate($request->get('per_page', 5));
 
         return response()->json([
-            'data' => $eskulMemberData->items(),  // Return the paginated items
+            'data' => $eskulMemberData->items(),
             'pagination' => [
                 'total' => $eskulMemberData->total(),
                 'current_page' => $eskulMemberData->currentPage(),
@@ -47,7 +46,7 @@ class DashboardOrganizationController extends Controller
     {
         $user = Auth::user();
         $this->checkAccess();
-        // Validate the request data
+
         $request->validate([
             'name' => 'required|string|max:255',
             'gen' => 'required|string|max:255',
@@ -55,8 +54,6 @@ class DashboardOrganizationController extends Controller
 
         $eskulData = eskul::where('leader_id', $user->id)->first();
 
-
-        // Create a new Eskul Member
         $eskulMember = EskulMember::create([
             'name' => $request->name,
             'gen' => $request->gen,
@@ -64,16 +61,61 @@ class DashboardOrganizationController extends Controller
             'instansi_id' => $eskulData->instansi_id,
         ]);
 
-        // Return a success response
         return response()->json([
             'message' => 'Eskul Member created successfully.',
             'data' => $eskulMember,
         ]);
     }
-    //
-    function getProfileInfo(Request $request)
-    {
 
+    public function updateEskulMember(Request $request)
+    {
+        $user = Auth::user();
+        $this->checkAccess();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'gen' => 'required|string|max:255',
+        ]);
+
+        $eskulMember = EskulMember::findOrFail($request->id);
+        $eskulData = eskul::where('leader_id', $user->id)->first();
+
+        if ($eskulMember->eskul_id !== $eskulData->id) {
+            return response()->json(['message' => 'forbidden'], 403);
+        }
+
+        $eskulMember->update([
+            'name' => $request->name,
+            'gen' => $request->gen,
+        ]);
+
+        return response()->json([
+            'message' => 'Eskul Member updated successfully.',
+            'data' => $eskulMember,
+        ]);
+    }
+
+    public function deleteEskulMember(Request $request)
+    {
+        $user = Auth::user();
+        $this->checkAccess();
+
+        $eskulMember = EskulMember::findOrFail($request->id);
+        $eskulData = eskul::where('leader_id', $user->id)->first();
+
+        if ($eskulMember->eskul_id !== $eskulData->id) {
+            return response()->json(['message' => 'forbidden'], 403);
+        }
+
+        $eskulMember->delete();
+
+        return response()->json([
+            'message' => 'Eskul Member deleted successfully.',
+        ]);
+    }
+
+    public function getProfileInfo(Request $request)
+    {
         $user = Auth::user();
         $this->checkAccess();
 
@@ -88,7 +130,7 @@ class DashboardOrganizationController extends Controller
             )
             ->with([
                 'achievements' => function ($query) {
-                    $query->select('*'); // Fetch all fields from eskul_achievements
+                    $query->select('*');
                 },
                 'webPages' => function ($query) {
                     $query->select('*')->with([
@@ -102,22 +144,20 @@ class DashboardOrganizationController extends Controller
                                 }
                             ]);
                         },
-                    ]); // Fetch all fields from eskul_achievements
+                    ]);
                 },
                 'kas' => function ($query) {
-                    $query->select('*'); // Fetch all fields from eskul_kas
+                    $query->select('*');
                 },
                 'instansi' => function ($query) {
                     $query->select('*')->with([
                         'instansi_web_page' => function ($query) {
-                            $query->select('*'); // Fetch all fields from eskul_kas
+                            $query->select('*');
                         }
-                    ]); // Fetch all fields from eskul_kas
+                    ]);
                 }
             ])
             ->first();
-
-
 
         $length = $data->count();
         return response()->json(['data' => $data, 'isFound' => $length]);

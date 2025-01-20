@@ -117,7 +117,9 @@ class EskulAbsentController extends Controller
     }
     public function getUserByName(Request $request)
     {
-        $names = EskulMember::where('name', 'LIKE', '%' . $request->name . '%')->get();
+        $user = Auth::user();
+        $eskul = eskul::where("leader_id", $user->id)->first();
+        $names = EskulMember::where('name', 'LIKE', '%' . $request->name . '%')->where('eskul_id', $eskul->id)->get();
         return response()->json(['data' => $names, 'message' => 'success']);
     }
     public function storeAbsen(Request $request)

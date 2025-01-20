@@ -41,4 +41,9 @@ class EskulMember extends Model
         'eskul_id',
         'instansi_id',
     ];
+
+    public function eskul()
+    {
+        return $this->hasOne(eskul::class, 'id', 'eskul_id');
+    }
 }

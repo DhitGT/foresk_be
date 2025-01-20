@@ -4,15 +4,55 @@ namespace App\Http\Controllers;
 
 use App\Models\eskul_report_activity;
 use App\Models\eskul;
+use App\Models\eskul_web_page;
 use App\Models\EskulAbsensi;
 use App\Models\MasterEskulAbsensi;
+use Date;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class EskulReportActivityController extends Controller
+
 {
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $user = Auth::user();
+
+        // Check if the user is the leader of the Eskul
+        $eskul = eskul::where('leader_id', $user->id)->first();
+
+        if (!$eskul) {
+            return response()->json(['message' => 'Eskul not found for the user'], 404);
+        }
+
+        // Find the activity by ID
+        $activity = eskul_report_activity::where('id', $id)
+            ->where('eskul_id', $eskul->id)
+            ->first();
+
+        if (!$activity) {
+            return response()->json(['message' => 'Activity not found or unauthorized'], 404);
+        }
+
+        // Delete the associated picture if it exists
+        if ($activity->picture) {
+            Storage::disk('public')->delete($activity->picture);
+        }
+
+        // Delete related MasterEskulAbsensi entry
+        MasterEskulAbsensi::where('eskul_report_activity_id', $activity->id)->delete();
+
+        // Delete the activity
+        $activity->delete();
+
+        return response()->json(['message' => 'Activity deleted successfully'], 200);
+    }
+
     public function getEskulActivityReport(Request $request)
     {
         $query = eskul_report_activity::query();
@@ -20,14 +60,19 @@ class EskulReportActivityController extends Controller
         $user = Auth::user();
         $eskul = eskul::where('id', $request->eskul_id)->first();
 
-
         // Apply filters
+        $today = now()->startOfDay(); // Today's date with time set to 00:00:00
+
         if ($request->has('start_date')) {
             $query->where('date_start', '>=', $request->input('start_date'));
+        } else {
+            $query->where('date_start', '>=', $today);
         }
 
         if ($request->has('end_date')) {
             $query->where('date_end', '<=', $request->input('end_date'));
+        } else {
+            $query->where('date_end', '<=', $today);
         }
 
         $activities = $query->where('instansi_id', $request->instansi_id)->with([
@@ -35,12 +80,14 @@ class EskulReportActivityController extends Controller
                 $query->select('*')->with([
                     'webPages' => function ($query) {
                         $query->select("*");
-                }]); // Fetch all fields from eskul_achievements
+                    }
+                ]); // Fetch all fields from eskul_achievements
             }
         ])->get();
 
         return response()->json($activities);
     }
+
     public function index(Request $request)
     {
         $query = eskul_report_activity::query();
@@ -52,6 +99,14 @@ class EskulReportActivityController extends Controller
         // Apply filters
         if ($request->has('start_date')) {
             $query->where('date_start', '>=', $request->input('start_date'));
+        }
+
+        if ($request->has('cdn')) {
+            $ewp = eskul_web_page::where('custom_domain_name', $request->input('cdn'))->first();
+
+            $query->where('eskul_id', '=', $ewp->eskul_id);
+        } else {
+            $query->where('eskul_id', '=', $eskul->id);
         }
 
         if ($request->has('end_date')) {
@@ -103,6 +158,8 @@ class EskulReportActivityController extends Controller
             'absent_code' => $absenCode,
         ]);
 
+        $instansiId = $eskul->instansi_id;
+
         $activity = eskul_report_activity::create([
             'id' => $eskulReportUUID,
             'eskul_id' => $eskul->id, // Dynamically set eskul_id
@@ -113,6 +170,7 @@ class EskulReportActivityController extends Controller
             'date_start' => $validated['date_start'],
             'date_end' => $validated['date_end'],
             'absent_code' => $absenCode,
+            'instansi_id' => $instansiId,
         ]);
 
 

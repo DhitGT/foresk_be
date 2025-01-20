@@ -152,6 +152,47 @@ class AuthController extends Controller
 
         return response()->json(['token' => $token, 'user' => $user, 'instansi' => $instansi]);
     }
+    public function deleteUser(Request $request)
+    {
+        $userId = $request->id;
+        $userRequest = Auth::user();
+
+        // Check if the authenticated user is a Manager
+        if ($userRequest->role != "Manager") {
+            return response()->json(['message' => 'Forbidden', 'status' => 403], 403);
+        }
+
+        // Retrieve the user to be deleted
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found', 'status' => 404], 404);
+        }
+
+        // Check if the user belongs to the same instansi
+        $instansi = Instansi::where('owner_id', $userRequest->id)->first();
+        $instansiUser = InstansiUser::where('instansi_id', $instansi->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$instansiUser) {
+            return response()->json(['message' => 'User does not belong to your instansi', 'status' => 403], 403);
+        }
+
+        // If the user is a Leader of an Eskul, reset the leader_id
+        $eskul = Eskul::where('leader_id', $user->id)->first();
+        if ($eskul) {
+            $eskul->leader_id = '0';
+            $eskul->update();
+        }
+
+        // Delete the user record and related InstansiUser entry
+        $instansiUser->delete();
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted successfully', 'status' => 200], 200);
+    }
+
     public function addUser(Request $request)
     {
         $userRequest = Auth::user();

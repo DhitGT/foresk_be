@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChartController;
 use App\Http\Controllers\EskulAbsentController;
 use App\Http\Controllers\KasController;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/getProfileInfo', [DashboardOrganizationController::class, 'getProfileInfo']);
         Route::get('/getEskulMembers', [DashboardOrganizationController::class, 'getEskulMembers']);
         Route::post('/storeEskulMember', [DashboardOrganizationController::class, 'storeEskulMember']);
+        Route::post('/updateEskulMember', [DashboardOrganizationController::class, 'updateEskulMember']);
+        Route::post('/deleteEskulMember', [DashboardOrganizationController::class, 'deleteEskulMember']);
 
         Route::apiResource('eskul-report-activities', EskulReportActivityController::class);
 
@@ -64,9 +67,12 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
     Route::group(['prefix' => '/dashboard/i'], function () {
+        Route::get('/getChartData', [ChartController::class, 'getChartData']);
+
         Route::get('/getMasterHakAkses', [HakAksesController::class, 'getMasterHakAkses']);
         Route::post('/updateHakAkses', [HakAksesController::class, 'updateHakAkses']);
         Route::post('/addUser', [AuthController::class, 'addUser']);
+        Route::post('/deleteUser', [AuthController::class, 'deleteUser']);
         Route::post('/editUser', [AuthController::class, 'editUser']);
         Route::get('/', [dashboard_instansi::class, 'index']);
         Route::get('/getActivityReport', [dashboard_instansi::class, 'getActivityReport']);
