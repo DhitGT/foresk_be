@@ -22,21 +22,17 @@ class AuthController extends Controller
     {
         $client = new Google_Client(['client_id' => env('GOOGLE_CLIENT_ID')]); // Your Google Client ID
         $idToken = $request->input('credential');
-
         try {
             // Verify the token
             $payload = $client->verifyIdToken($idToken);
-
             if ($payload) {
                 // Extract user information
                 $googleId = $payload['sub']; // Google user ID
                 $email = $payload['email'];
                 $name = $payload['name'];
                 $profileImage = $payload['picture'] ?? null;
-
                 // Check if the user already exists
                 $user = User::where('google_id', $googleId)->orWhere('email', $email)->first();
-
                 $imagePath = null;
                 if ($profileImage) {
                     // Fetch and save the image locally
@@ -45,7 +41,6 @@ class AuthController extends Controller
                     $imagePath = 'profiles/' . $imageName; // Path inside the storage folder
                     Storage::disk('public')->put($imagePath, $imageContents);
                 }
-
                 if (!$user) {
                     // Create a new user following the same pattern as the register function
                     $user = User::create([
@@ -67,7 +62,6 @@ class AuthController extends Controller
                 } else {
                     $instansi = Instansi::where('owner_id', $user->id)->first();
                 }
-
                 // Generate a token for the user
                 $token = $user->createToken('auth_token')->plainTextToken;
 

@@ -113,12 +113,10 @@ class DashboardOrganizationController extends Controller
             'message' => 'Eskul Member deleted successfully.',
         ]);
     }
-
     public function getProfileInfo(Request $request)
     {
         $user = Auth::user();
         $this->checkAccess();
-
         $data = Eskul::where('eskuls.leader_id', $user->id)
             ->leftJoin('users', 'users.id', '=', 'eskuls.leader_id')
             ->select(
